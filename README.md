@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🌍 Traveloo — Frontend
 
 ![React Version](https://img.shields.io/badge/react-19-blue)
@@ -209,3 +210,6 @@ Ce projet est sous licence **MIT**. Voir [`LICENSE`](LICENSE) pour les détails.
 ---
 
 Bon voyage avec **Traveloo** ✈️🌍
+=======
+# traveloo
+>>>>>>> 1c493d6e9632c4be44c87b71f4875791e717eb32
