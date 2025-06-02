@@ -6,9 +6,11 @@ import Loader from "../components/layout/Loader";
 import { ROUTES } from "./routes";
 
 export default function PrivateRoute({ children }) {
-  const { user, loading } = useContext(AuthContext);
+  const { currentUser, loadingAuth } = useContext(AuthContext);
 
-  if (loading) return <Loader />;
+  if (loadingAuth) {
+    return <Loader />;
+  }
 
-  return user ? children : <Navigate to={ROUTES.login} />;
+  return currentUser ? children : <Navigate to={ROUTES.login} replace />;
 }

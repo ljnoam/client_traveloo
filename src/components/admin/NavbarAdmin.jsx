@@ -1,7 +1,6 @@
 // src/components/admin/NavbarAdmin.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../api/supabaseClient";
 
 export default function NavbarAdmin() {
   const navigate = useNavigate();

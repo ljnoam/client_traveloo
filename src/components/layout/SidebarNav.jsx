@@ -1,61 +1,139 @@
-// src/components/layout/SidebarNav.jsx
-import React, { useState } from "react";
-import { useTheme } from "../../context/ThemeContext";
-import { motion } from "framer-motion";
+"use client"
+
+import { useState } from "react"
+import { useTheme } from "../../context/ThemeContext"
+import { Plane, Building, MapPin, Sparkles } from "lucide-react"
 
 export default function SidebarNav({ onNavigate }) {
-  const { darkMode } = useTheme();
-  const [activeSection, setActiveSection] = useState(null);
+  const { darkMode } = useTheme()
+  const [activeSection, setActiveSection] = useState("flights")
+  const [hoveredSection, setHoveredSection] = useState(null)
 
-  const items = [
-    { id: "flights", emoji: "✈️", label: "Vols" },
-    { id: "hotels", emoji: "🏨", label: "Hôtels" },
-    { id: "itinerary", emoji: "🗓️", label: "Itinéraire" },
-    { id: "food", emoji: "🍽️", label: "Restos" },
-  ];
+  const handleNavigation = (sectionId) => {
+    setActiveSection(sectionId)
+    onNavigate(sectionId)
+  }
 
-  // Couleurs de la charte graphique
-  const primary = darkMode ? "#1BA1C3" : "#37C0D8";
-  const secondary = darkMode ? "#E0484C" : "#FF5A5F";
-  const textPrimary = darkMode ? "#E5E7EB" : "#111827";
-  const surface = darkMode ? "#1E1E1E" : "#FFFFFF";
+  const navItems = [
+    {
+      id: "flights",
+      icon: Plane,
+      title: "Vols",
+      description: "Rechercher et réserver des vols",
+    },
+    {
+      id: "hotels",
+      icon: Building,
+      title: "Hôtels",
+      description: "Trouver l'hébergement parfait",
+    },
+    {
+      id: "itinerary",
+      icon: MapPin,
+      title: "Itinéraire",
+      description: "Planifier votre voyage",
+    },
+    {
+      id: "widgets",
+      icon: Sparkles,
+      title: "Services",
+      description: "Outils et services de voyage",
+    },
+  ]
 
-  const handleClick = (sectionId) => {
-    setActiveSection(sectionId);
-    if (onNavigate) {
-      onNavigate(sectionId);
+  // Dynamic color schemes based on theme
+  const getThemeClasses = () => {
+    if (darkMode) {
+      // Dark mode: Violet and Black
+      return {
+        container: "bg-black/80 border-violet-500/30 shadow-violet-900/40",
+        itemDefault: "text-violet-200 hover:bg-violet-900/40",
+        itemActive: "bg-violet-900/60 border-violet-400/60 text-violet-300 shadow-violet-500/30",
+        itemHover: "text-violet-300 scale-125",
+        tooltip: "bg-black/95 text-violet-100 border-violet-500/40",
+        tooltipArrow: "border-r-black/95",
+        tooltipDescription: "text-violet-300",
+      }
+    } else {
+      // Light mode: Green and Dark White
+      return {
+        container: "bg-slate-50/90 border-green-300/50 shadow-green-900/20",
+        itemDefault: "text-slate-700 hover:bg-green-50/60",
+        itemActive: "bg-green-100/80 border-green-500/60 text-green-700 shadow-green-500/20",
+        itemHover: "text-green-600 scale-125",
+        tooltip: "bg-slate-50/95 text-slate-800 border-green-300/50",
+        tooltipArrow: "border-r-slate-50/95",
+        tooltipDescription: "text-slate-600",
+      }
     }
-  };
+  }
+
+  const themeClasses = getThemeClasses()
 
   return (
-    <motion.div
-      initial={{ x: -50, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="fixed left-2 top-1/3 z-50 flex flex-col space-y-4"
-    >
-      {items.map((item) => {
-        const isActive = activeSection === item.id;
+    <div className="fixed left-6 top-1/2 transform -translate-y-1/2 z-50">
+      <div className="flex flex-col justify-center items-center relative transition-all duration-[450ms] ease-in-out w-20">
+        <article
+          className={`
+            border w-full ease-in-out duration-500 rounded-2xl inline-block shadow-xl backdrop-blur-lg
+            ${themeClasses.container}
+          `}
+        >
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeSection === item.id
+            const isHovered = hoveredSection === item.id
 
-        return (
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            key={item.id}
-            title={item.label}
-            onClick={() => handleClick(item.id)}
-            className="w-10 h-10 flex items-center justify-center text-xl rounded-xl shadow-md border transition-all duration-300"
-            style={{
-              backgroundColor: isActive ? primary : surface,
-              color: isActive ? "#FFFFFF" : textPrimary,
-              borderColor: isActive ? primary : "transparent",
-              boxShadow: isActive ? `0 0 0 2px ${primary}40` : "",
-            }}
-          >
-            {item.emoji}
-          </motion.button>
-        );
-      })}
-    </motion.div>
-  );
+            return (
+              <div key={item.id} className="relative group">
+                <label
+                  className={`
+                    relative w-full h-20 p-5 ease-in-out duration-300 
+                    flex flex-row gap-3 items-center justify-center 
+                    rounded-xl cursor-pointer transition-all duration-300
+                    ${isActive ? `shadow-lg ${themeClasses.itemActive}` : themeClasses.itemDefault}
+                  `}
+                  onMouseEnter={() => setHoveredSection(item.id)}
+                  onMouseLeave={() => setHoveredSection(null)}
+                  onClick={() => handleNavigation(item.id)}
+                >
+                  <Icon
+                    className={`
+                      text-3xl transition-all duration-300 ease-in-out
+                      ${isActive || isHovered ? themeClasses.itemHover : "scale-100"}
+                    `}
+                    size={28}
+                  />
+                </label>
+
+                {/* Tooltip */}
+                <div
+                  className={`
+                    absolute left-full ml-4 top-1/2 transform -translate-y-1/2
+                    backdrop-blur-lg px-4 py-3 rounded-xl shadow-xl
+                    transition-all duration-300 ease-in-out
+                    pointer-events-none whitespace-nowrap z-50
+                    ${themeClasses.tooltip}
+                    ${isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"}
+                  `}
+                >
+                  <div className="font-semibold text-base">{item.title}</div>
+                  <div className={`text-sm ${themeClasses.tooltipDescription}`}>{item.description}</div>
+
+                  {/* Arrow */}
+                  <div
+                    className={`
+                      absolute right-full top-1/2 transform -translate-y-1/2 
+                      border-8 border-transparent 
+                      ${themeClasses.tooltipArrow}
+                    `}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </article>
+      </div>
+    </div>
+  )
 }

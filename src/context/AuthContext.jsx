@@ -1,34 +1,48 @@
 // src/context/AuthContext.jsx
 import { createContext, useEffect, useState } from "react";
-import { supabase } from "../api/supabaseClient";
+import { api } from "../api/config";
 
-export const AuthContext = createContext();
+export const AuthContext = createContext({
+  currentUser: null,
+  setCurrentUser: () => {},
+  loadingAuth: true,
+});
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("traveloo_token");
+      if (!token) {
+        setLoadingAuth(false);
+        return;
+      }
+      try {
+        const res = await api.get("/auth/me");
+        setCurrentUser(res.data);
+      } catch (err) {
+        // Si token invalide/expiré, on l’enlève
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          localStorage.removeItem("traveloo_token");
+          setCurrentUser(null);
+        }
+      } finally {
+        setLoadingAuth(false);
+      }
     };
 
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    fetchProfile();
   }, []);
 
+  useEffect(() => {
+    console.log("[AuthContext] currentUser →", currentUser);
+  }, [currentUser]);
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ currentUser, setCurrentUser, loadingAuth }}>
+      {!loadingAuth && children}
     </AuthContext.Provider>
-  );
+  );
 };

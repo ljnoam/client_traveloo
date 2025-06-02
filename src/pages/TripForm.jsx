@@ -1,76 +1,103 @@
 // src/pages/TripForm.jsx
-import React, { useState, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
-import { useNavigate } from "react-router-dom";
-import { useLoadScript } from "@react-google-maps/api";
-import GooglePlacesInput from "../components/UI/GooglePlacesInput";
-import GlobalBackground from "../components/layout/GlobalBackground";
-import Loader from "../components/layout/Loader";
+"use client"
+
+import React, { useState, useContext, useEffect } from "react"
+import { AuthContext } from "../context/AuthContext"
+import { useTheme } from "../context/ThemeContext"
+import { useNavigate } from "react-router-dom"
+import Loader from "../components/layout/Loader"
 
 export default function TripForm() {
-  const { user, loading } = useContext(AuthContext);
-  const { darkMode } = useTheme();
-  const navigate = useNavigate();
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: ["places"],
-    language: "en",
-  });
+  const { currentUser: user, loadingAuth } = useContext(AuthContext)
+  const { darkMode } = useTheme()
+  const navigate = useNavigate()
 
+  // État du formulaire (IATA, dates, pax, classe, préférences)
   const [form, setForm] = useState({
-    from: "",
-    to: "",
-    startDate: "",
-    endDate: "",
-    cls: "economy",
+    from: "",        // code IATA (ex : "PAR")
+    to: "",          // code IATA (ex : "LIS")
+    startDate: "",   // "YYYY-MM-DD"
+    endDate: "",     // "YYYY-MM-DD" ou ""
+    cls: "Y",        // "Y" (éco) ou "C" (affaires)
     adults: 1,
     children: 0,
     infants: 0,
-  });
+    preferences: "", // chaîne “culture, bouffe, …”
+  })
 
-  if (loading) return <Loader />;
-  if (!user) {
-    navigate("/login");
-    return null;
+  // Si on ne connaît pas encore l’utilisateur connecté, on attend
+  if (loadingAuth) return <Loader />
+  useEffect(() => {
+    if (!loadingAuth && !user) navigate("/login")
+  }, [loadingAuth, user, navigate])
+
+  // Mise à jour d’un champ texte/number/select
+  const handleChange = ({ target: { name, value, type } }) => {
+    const v = type === "number" ? +value : value
+    setForm((f) => ({ ...f, [name]: v }))
   }
 
-  const handleChange = ({ target: { name, value, type } }) => {
-    const v = type === "number" ? +value : value;
-    setForm(f => ({ ...f, [name]: v }));
-  };
-  const handleSelect = (field, val) =>
-    setForm(f => ({ ...f, [field]: val }));
-
   const handleSubmit = () => {
-    const required = ["from","to","startDate","endDate"];
-    for (let k of required) {
-      if (!form[k]) {
-        alert("Merci de remplir tous les champs obligatoires.");
-        return;
-      }
+    // Validation minimale
+    if (
+      !form.from ||
+      form.from.trim().length !== 3 ||
+      !form.to ||
+      form.to.trim().length !== 3 ||
+      !form.startDate ||
+      form.adults < 1
+    ) {
+      alert(
+        "Merci de saisir un code IATA valide (3 lettres) pour Origine & Destination, " +
+        "une date de départ, et au moins 1 adulte."
+      )
+      return
     }
-    if (form.adults < 1) {
-      alert("Il faut au moins un adulte.");
-      return;
-    }
-    navigate("/planner", { state: form });
-  };
 
-  const wrapperText = darkMode ? "text-gray-100" : "text-gray-900";
-  const containerBg = darkMode ? "bg-gray-800/70" : "bg-green-50/70";
-  const backdrop = "backdrop-blur-lg";
-  const labelText = darkMode ? "text-gray-100" : "text-gray-800";
-  const inputBg = darkMode
-    ? "bg-gray-700 text-gray-100"
-    : "bg-white text-gray-900";
+    // → Construire le payload EXACT pour la recherche de vols (IATA en majuscule)
+    const flightPayload = {
+      origin: form.from.trim().toUpperCase(),
+      destination: form.to.trim().toUpperCase(),
+      departure_date: form.startDate,
+      ...(form.endDate ? { return_date: form.endDate } : {}),
+      class_: form.cls,
+      adults: form.adults,
+      children: form.children,
+      infants: form.infants,
+    }
+
+    // → Construire le payload pour l’API “/generate-itinerary”
+    const prefsArray = form.preferences
+      .split(",")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0)
+
+    const itineraryPayload = {
+      city: form.to.trim().toUpperCase(),
+      start_date: form.startDate,
+      end_date: form.endDate || form.startDate,
+      profile: user.id || user.email || "solo",
+      preferences: prefsArray,
+    }
+
+    // On envoie les deux objets à Planner via location.state
+    navigate("/planner", {
+      state: { flightPayload, itineraryPayload },
+    })
+  }
+
+  // Classes Tailwind conditionnelles
+  const wrapperText = darkMode ? "text-gray-100" : "text-gray-900"
+  const containerBg = darkMode ? "bg-gray-800/70" : "bg-green-50/70"
+  const backdrop = "backdrop-blur-lg"
+  const labelText = darkMode ? "text-gray-100" : "text-gray-800"
+  const inputBg = darkMode ? "bg-gray-700 text-gray-100" : "bg-white text-gray-900"
   const btnPrimary = darkMode
     ? "from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-    : "from-green-400 to-teal-400 hover:from-green-500 hover:to-teal-500";
+    : "from-green-400 to-teal-400 hover:from-green-500 hover:to-teal-500"
 
   return (
     <div className={`relative min-h-screen ${wrapperText}`}>
-      <GlobalBackground />
       <div className="relative z-10 px-6 py-24">
         <div
           className={`${containerBg} ${backdrop} max-w-2xl mx-auto p-8 rounded-2xl space-y-8 shadow-xl`}
@@ -79,42 +106,32 @@ export default function TripForm() {
             Rechercher un voyage
           </h1>
 
-          {/* Vols vs Hôtels fields */}
+          {/* FROM (IATA) */}
           <div>
-            <label className={`block mb-1 ${labelText}`}>Ville de départ</label>
-            {isLoaded ? (
-              <GooglePlacesInput
-                field="from"
-                value={form.from}
-                onSelect={v => handleSelect("from", v)}
-              />
-            ) : (
-              <input
-                type="text"
-                name="from"
-                value={form.from}
-                onChange={handleChange}
-                className={`w-full border rounded-lg p-3 ${inputBg}`}
-              />
-            )}
+            <label className={`block mb-1 ${labelText}`}>Ville de départ (IATA)</label>
+            <input
+              type="text"
+              name="from"
+              value={form.from}
+              onChange={handleChange}
+              className={`w-full border rounded-lg p-3 ${inputBg}`}
+              placeholder="Ex : PAR"
+              maxLength={3}
+            />
           </div>
+
+          {/* TO (IATA) */}
           <div>
-            <label className={`block mb-1 ${labelText}`}>Ville d’arrivée</label>
-            {isLoaded ? (
-              <GooglePlacesInput
-                field="to"
-                value={form.to}
-                onSelect={v => handleSelect("to", v)}
-              />
-            ) : (
-              <input
-                type="text"
-                name="to"
-                value={form.to}
-                onChange={handleChange}
-                className={`w-full border rounded-lg p-3 ${inputBg}`}
-              />
-            )}
+            <label className={`block mb-1 ${labelText}`}>Ville d’arrivée (IATA)</label>
+            <input
+              type="text"
+              name="to"
+              value={form.to}
+              onChange={handleChange}
+              className={`w-full border rounded-lg p-3 ${inputBg}`}
+              placeholder="Ex : LIS"
+              maxLength={3}
+            />
           </div>
 
           {/* Dates */}
@@ -130,7 +147,7 @@ export default function TripForm() {
               />
             </div>
             <div>
-              <label className={`block mb-1 ${labelText}`}>Retour</label>
+              <label className={`block mb-1 ${labelText}`}>Retour (facultatif)</label>
               <input
                 type="date"
                 name="endDate"
@@ -141,9 +158,8 @@ export default function TripForm() {
             </div>
           </div>
 
-          {/* Classe et passagers */}
+          {/* Classe + Adultes */}
           <div className="grid grid-cols-2 gap-4">
-            {/* Trip class */}
             <div>
               <label className={`block mb-1 ${labelText}`}>Classe</label>
               <select
@@ -152,11 +168,10 @@ export default function TripForm() {
                 onChange={handleChange}
                 className={`w-full border rounded-lg p-3 ${inputBg}`}
               >
-                <option value="economy">Économique</option>
-                <option value="business">Affaires</option>
+                <option value="Y">Économique (Y)</option>
+                <option value="C">Affaires (C)</option>
               </select>
             </div>
-            {/* Adults */}
             <div>
               <label className={`block mb-1 ${labelText}`}>Adultes (≥12 ans)</label>
               <input
@@ -168,7 +183,10 @@ export default function TripForm() {
                 className={`w-full border rounded-lg p-3 ${inputBg}`}
               />
             </div>
-            {/* Children */}
+          </div>
+
+          {/* Enfants + Bébés */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={`block mb-1 ${labelText}`}>Enfants (2–12 ans)</label>
               <input
@@ -180,7 +198,6 @@ export default function TripForm() {
                 className={`w-full border rounded-lg p-3 ${inputBg}`}
               />
             </div>
-            {/* Infants */}
             <div>
               <label className={`block mb-1 ${labelText}`}>Bébés (0–2 ans)</label>
               <input
@@ -194,7 +211,22 @@ export default function TripForm() {
             </div>
           </div>
 
-          {/* Submit */}
+          {/* Préférences */}
+          <div>
+            <label className={`block mb-1 ${labelText}`}>
+              Préférences (séparées par virgule)
+            </label>
+            <input
+              type="text"
+              name="preferences"
+              value={form.preferences}
+              onChange={handleChange}
+              className={`w-full border rounded-lg p-3 ${inputBg}`}
+              placeholder="Ex : culture, bouffe"
+            />
+          </div>
+
+          {/* Bouton Rechercher */}
           <div className="text-center">
             <button
               onClick={handleSubmit}
@@ -206,5 +238,5 @@ export default function TripForm() {
         </div>
       </div>
     </div>
-  );
+  )
 }

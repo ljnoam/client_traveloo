@@ -23,14 +23,14 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
 import UpdatePassword from "./pages/UpdatePassword";
 import Dashboard from "./pages/admin/Dashboard";
-import AuthCallback from "./pages/AuthCallback"; // ✅ Ajouté ici
+import AuthCallback from "./pages/AuthCallback";
 
 import { ROUTES } from "./routes/routes";
 import PrivateRoute from "./routes/PrivateRoute";
 import PrivateAdminRoute from "./routes/PrivateAdminRoute";
 
 function AppContent() {
-  const { user, loading } = useContext(AuthContext);
+  const { currentUser: user, loadingAuth: loading } = useContext(AuthContext);
   const [consent, setConsent] = useState(null);
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -48,6 +48,10 @@ function AppContent() {
       document.head.appendChild(link);
     }
   }, [consent]);
+
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <>
@@ -77,7 +81,7 @@ function AppContent() {
         <Route path={ROUTES.politique} element={<PrivacyPolicy />} />
         <Route path={ROUTES.terms} element={<TermsOfUse />} />
         <Route path={ROUTES.updatePassword} element={<UpdatePassword />} />
-        <Route path={ROUTES.authCallback} element={<AuthCallback />} /> {/* ✅ ajout route callback */}
+        <Route path={ROUTES.authCallback} element={<AuthCallback />} />
 
         {/* Pages utilisateur connecté */}
         <Route

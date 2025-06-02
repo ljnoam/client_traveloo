@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import NavbarAdmin from "../../components/admin/NavbarAdmin";
 import CardAdmin from "../../components/admin/CardAdmin";
-import { supabase } from "../../api/supabaseClient";
 
 export default function Dashboard() {
   const [users, setUsers] = useState([]);

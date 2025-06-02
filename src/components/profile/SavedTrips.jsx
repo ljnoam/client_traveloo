@@ -1,146 +1,175 @@
+// src/components/profile/SavedTrips.jsx
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { FaSuitcase, FaTrash } from "react-icons/fa";
 import { AuthContext } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { supabase } from "../../api/supabaseClient";
+import { api } from "../../api/config";
 import TripSummaryCard from "../UI/TripSummaryCard";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-// Composant modal spécifique à SavedTrips
-function DeleteConfirmationModal({ onConfirm, onCancel }) {
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-11/12 max-w-md">
-        <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-          Confirmer la suppression
-        </h4>
-        <p className="text-gray-700 dark:text-gray-300">
-          Voulez-vous vraiment supprimer ce voyage de vos favoris ?
-        </p>
-        <div className="flex justify-end gap-4 mt-6">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-gray-800 dark:text-gray-200"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-          >
-            Supprimer
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function SavedTrips() {
-  const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const { currentUser } = useContext(AuthContext);
   const { darkMode } = useTheme();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [tripToDelete, setTripToDelete] = useState(null);
 
-  const cardBg = darkMode ? "bg-gray-800/80" : "bg-green-50/80";
-  const backdrop = "backdrop-blur-md";
-  const borderColor = darkMode ? "border-violet-700" : "border-green-300";
-  const titleColor = darkMode ? "text-violet-300" : "text-green-600";
-  const textColor = darkMode ? "text-gray-100" : "text-gray-800";
+  // Styles conditionnels
+  const cardBg      = darkMode ? "bg-gray-800/80" : "bg-white/80";
+  const borderColor = darkMode ? "border-violet-700" : "border-gray-300";
+  const titleColor  = darkMode ? "text-violet-300" : "text-gray-900";
+  const textColor   = darkMode ? "text-gray-100" : "text-gray-900";
 
   useEffect(() => {
-    if (!user) return;
-
     const fetchFavorites = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("favorites")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Erreur Supabase:", error.message);
-        toast.error("Erreur de récupération des favoris : " + error.message);
-      } else {
-        setFavorites(data || []);
+      if (!currentUser) {
+        setLoading(false);
+        return;
       }
 
-      setLoading(false);
+      setLoading(true);
+      try {
+        // Appel à l'API pour récupérer la liste des favoris
+        const res = await api.get("/favorites/");
+        setFavorites(res.data || []);
+      } catch (err) {
+        console.error("[SavedTrips] Erreur récupération des favoris :", err);
+        setFavorites([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchFavorites();
-  }, [user]);
+  }, [currentUser]);
 
-  const handleTripClick = (trip) => {
-    navigate("/saved-trip", { state: { trip } });
+  const handleDelete = async (tripId) => {
+    if (!window.confirm("Voulez-vous vraiment supprimer ce voyage ?")) return;
+    try {
+      await api.delete(`/favorites/${tripId}`);
+      setFavorites((prev) => prev.filter((t) => t.id !== tripId));
+    } catch (err) {
+      console.error("[SavedTrips] Erreur suppression favori :", err);
+      alert("Impossible de supprimer ce favori pour le moment.");
+    }
   };
 
-  const openModal = (trip) => {
-    setTripToDelete(trip);
-    setShowModal(true);
-  };
+  // Tant que currentUser n'est pas encore chargé
+  if (!currentUser && loading) {
+    return (
+      <div className={`${cardBg} ${borderColor} border rounded-2xl p-8 shadow-md`}>
+        <p className={textColor}>Vérification des accès…</p>
+      </div>
+    );
+  }
 
-  const confirmDelete = async () => {
-    if (!tripToDelete) return;
-    const { error } = await supabase
-      .from("favorites")
-      .delete()
-      .eq("id", tripToDelete.id);
+  if (!currentUser) {
+    return (
+      <div className={`${cardBg} ${borderColor} border rounded-2xl p-8 shadow-md`}>
+        <p className={textColor}>Vous devez être connecté pour voir vos favoris.</p>
+      </div>
+    );
+  }
 
-    if (error) {
-      toast.error("Erreur lors de la suppression : " + error.message);
-    } else {
-      setFavorites((prev) => prev.filter((t) => t.id !== tripToDelete.id));
-      toast.success("Voyage supprimé des favoris !");
+  if (loading) {
+    return (
+      <div className={`${cardBg} ${borderColor} border rounded-2xl p-8 shadow-md`}>
+        <p className={textColor}>Chargement de vos voyages enregistrés…</p>
+      </div>
+    );
+  }
+
+  // CSS du bouton “Delete” tel que fourni (Uiverse)
+  const deleteButtonCSS = `
+    /* From Uiverse.io by vinodjangid07 */ 
+    .button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: rgb(20, 20, 20);
+      border: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.164);
+      cursor: pointer;
+      transition-duration: .3s;
+      overflow: hidden;
+      position: absolute;
+      top: 10px;
+      right: 10px;
     }
 
-    setShowModal(false);
-    setTripToDelete(null);
-  };
+    .svgIcon {
+      width: 12px;
+      transition-duration: .3s;
+    }
+
+    .svgIcon path {
+      fill: white;
+    }
+
+    .button:hover {
+      width: 140px;
+      border-radius: 50px;
+      transition-duration: .3s;
+      background-color: rgb(255, 69, 69);
+      align-items: center;
+    }
+
+    .button:hover .svgIcon {
+      width: 50px;
+      transition-duration: .3s;
+      transform: translateY(60%);
+    }
+
+    .button::before {
+      position: absolute;
+      top: -20px;
+      content: "Delete";
+      color: white;
+      transition-duration: .3s;
+      font-size: 2px;
+    }
+
+    .button:hover::before {
+      font-size: 13px;
+      opacity: 1;
+      transform: translateY(30px);
+      transition-duration: .3s;
+    }
+  `;
 
   return (
     <>
-      {/* Position changed to bottom-center for visibility */}
-      <ToastContainer position="bottom-center" autoClose={3000} hideProgressBar />
-      <div className={`${cardBg} ${backdrop} border ${borderColor} p-6 rounded-xl shadow-md transition-colors duration-500`}>
-        <h3 className={`flex items-center gap-2 text-lg font-semibold mb-4 ${titleColor}`}>
-          <FaSuitcase /> Mes voyages enregistrés
-        </h3>
+      <style>{deleteButtonCSS}</style>
 
-        {loading ? (
-          <p className={`italic ${textColor}`}>Chargement...</p>
-        ) : favorites.length === 0 ? (
-          <p className={`italic ${textColor}`}>Aucun voyage sauvegardé pour le moment.</p>
+      <div className={`${cardBg} ${borderColor} border rounded-2xl p-8 shadow-md`}>
+        <h3 className={`text-2xl font-bold mb-6 ${titleColor}`}>Mes voyages enregistrés</h3>
+
+        {favorites.length === 0 ? (
+          <p className={textColor}>Aucun voyage sauvegardé pour le moment.</p>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {favorites.map((trip) => (
-              <div key={trip.id} className="relative group">
-                <TripSummaryCard trip={trip} onClick={() => handleTripClick(trip)} />
+              <div
+                key={trip.id}
+                className={`${cardBg} ${borderColor} border rounded-2xl relative p-6 shadow-lg transition-colors duration-500`}
+              >
                 <button
-                  onClick={() => openModal(trip)}
-                  className="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white/50 rounded-full p-1"
-                  title="Supprimer des favoris"
+                  onClick={() => handleDelete(trip.id)}
+                  className="button"
+                  title="Supprimer ce favori"
                 >
-                  <FaTrash />
+                  <svg viewBox="0 0 448 512" className="svgIcon">
+                    <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z" />
+                  </svg>
                 </button>
+
+                <TripSummaryCard trip={trip} />
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {showModal && (
-        <DeleteConfirmationModal
-          onConfirm={confirmDelete}
-          onCancel={() => setShowModal(false)}
-        />
-      )}
     </>
   );
 }

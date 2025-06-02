@@ -1,17 +1,21 @@
 // src/pages/Login.jsx
-import { useState, useEffect } from "react";
-import { supabase } from "../api/supabaseClient";
+import { useState, useEffect, useContext } from "react";
+import { login } from "../api/authApi";
 import { useNavigate } from "react-router-dom";
 import { FaSuitcaseRolling, FaEye, FaEyeSlash } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { AuthContext } from "../context/AuthContext";
 
 const Login = () => {
+  console.log("[Login] rendu Login.jsx"); // <-- debug initial
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { setCurrentUser } = useContext(AuthContext);
 
   useEffect(() => {
+    console.log("[Login] mounted");
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "auto";
@@ -19,25 +23,24 @@ const Login = () => {
   }, []);
 
   const handleLogin = async () => {
+    console.log("[Login] handleLogin appelé avec :", { email, password });
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        alert("Erreur de connexion : " + error.message);
+      const { user, session } = await login({ email, password });
+      console.log("[Login] réponse login user:", user);
+      console.log("[Login] réponse login session:", session);
+      localStorage.setItem("traveloo_token", session.access_token);
+      console.log("[Login] token enregistré :", session.access_token);
+      setCurrentUser(user);
+      console.log("[Login] setCurrentUser(user) appelé");
+      if (user.role === "admin") {
+        navigate("/admin");
       } else {
-        const user = data.user;
-        // ✅ Redirection selon le type d'utilisateur
-        if (user?.email === "support@traveloo.fr") {
-          navigate("/admin");
-        } else {
-          navigate("/trip-form");
-        }
+        navigate("/trip-form");
       }
     } catch (err) {
-      alert("Erreur inattendue : " + err.message);
+      const msg = err.response?.data?.detail || err.message;
+      console.error("[Login] login error:", err);
+      alert("Erreur de connexion : " + msg);
     }
   };
 
@@ -77,7 +80,7 @@ const Login = () => {
           />
           <button
             type="button"
-            onClick={() => setShowPassword(v => !v)}
+            onClick={() => setShowPassword((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
             aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
           >

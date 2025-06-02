@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../api/supabaseClient";
 import toast from "react-hot-toast";
 
 const AuthCallback = () => {

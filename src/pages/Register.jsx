@@ -1,11 +1,11 @@
 // src/pages/Register.jsx
 import { useState, useEffect } from "react";
-import { supabase } from "../api/supabaseClient";
+import { register } from "../api/authApi";
 import { useNavigate, Link } from "react-router-dom";
 import { FaSuitcaseRolling, FaEye, FaEyeSlash } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { ROUTES } from "../routes/routes"; // ← tu as déjà ça, parfait
+import { ROUTES } from "../routes/routes";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -29,20 +29,12 @@ const Register = () => {
       return;
     }
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error("Erreur : " + error.message);
-      } else {
-        toast.success("📧 Vérifie ta boîte mail pour activer ton compte !");
-        const savedForm = localStorage.getItem("tripForm");
-        navigate(savedForm ? "/trip-form" : "/profile");
-      }
+      const { user, session } = await register({ email, password });
+      toast.success("📧 Inscription réussie, vérifiez votre mail.");
+      navigate("/login");
     } catch (err) {
-      toast.error("Erreur inattendue : " + err.message);
+      const msg = err.response?.data?.detail || err.message;
+      toast.error("Erreur : " + msg);
     }
   };
 

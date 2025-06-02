@@ -1,37 +1,42 @@
+// src/components/UI/TripSummaryCard.jsx
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { FaSuitcase } from "react-icons/fa";
 
-const TripSummaryCard = ({ trip, onClick }) => {
-  console.log("TRIP:", trip);
+export default function TripSummaryCard({ trip }) {
+  const navigate = useNavigate();
+  const {
+    id,
+    destination,
+    start_date: startDate,
+    end_date: endDate,
+  } = trip;
 
-  // Si created_at est défini et valide, on le formate
-  let formattedDate = "Date inconnue";
-  if (trip.created_at) {
-    const parsed = new Date(trip.created_at);
-    if (!isNaN(parsed)) {
-      formattedDate = parsed.toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-    }
-  }
+  const handleClick = () => {
+    // Par exemple, on peut naviguer vers une page detail en passant l’objet trip en state
+    navigate("/saved-trip", { state: { trip } });
+  };
 
   return (
-    <div
-      onClick={() => onClick(trip)}
-      className="bg-white p-4 rounded-xl shadow cursor-pointer hover:shadow-md transition"
+    <div 
+      className="flex items-center justify-between p-4 border rounded-lg shadow hover:shadow-lg transition"
+      onClick={handleClick}
+      style={{ cursor: "pointer" }}
     >
-      <h3 className="text-lg font-bold text-blue-700 mb-1">
-        ✈️ {trip.destination}
-      </h3>
-      <p className="text-sm text-gray-600">
-        📅 {trip.start_date} → {trip.end_date}
-      </p>
-      <p className="text-xs text-gray-500 mt-1">
-        🗓️ Enregistré le {formattedDate}
-      </p>
-    </div>
-  );
-};
-
-export default TripSummaryCard;
+      <div className="flex items-center gap-3">
+        <FaSuitcase className="text-green-600 dark:text-green-400" size={24} />
+        <div>
+          <h4 className="font-semibold text-gray-800 dark:text-gray-100">
+            {destination}
+          </h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {new Date(startDate).toLocaleDateString()} → {new Date(endDate).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+      <button className="text-blue-600 dark:text-blue-400 underline text-sm">
+        Voir détails
+      </button>
+    </div>
+  );
+}
