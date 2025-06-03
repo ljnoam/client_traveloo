@@ -12,6 +12,7 @@ export default function TripForm() {
   const { darkMode } = useTheme()
   const navigate = useNavigate()
 
+  // État du formulaire (IATA, dates, pax, classe, préférences)
   const [form, setForm] = useState({
     fromName: "",        // nom complet de ville
     toName: "",

@@ -62,9 +62,9 @@ export default function SidebarNav({ onNavigate }) {
         tooltipDescription: "text-slate-600",
       };
     }
-  };
+  }
 
-  const themeClasses = getThemeClasses();
+  const themeClasses = getThemeClasses()
 
   return (
     <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50">
@@ -93,7 +93,7 @@ export default function SidebarNav({ onNavigate }) {
                 >
                   <Icon
                     className={`
-                      text-2xl transition-all duration-300 ease-in-out
+                        text-2xl transition-all duration-300 ease-in-out
                       ${isActive || isHovered ? themeClasses.itemHover : "scale-100"}
                     `}
                     size={24}
