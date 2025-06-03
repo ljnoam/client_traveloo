@@ -1,7 +1,6 @@
 // src/components/home/FeedbackCard.jsx
 import React, { useState } from 'react';
-import { useTheme } from '../../context/ThemeContext'; // ← on récupère darkMode
-import { supabase } from '../../api/supabaseClient';
+import { useTheme } from '../../context/ThemeContext'; // ← on récupère darkMode  
 
 export default function FeedbackCard() {
   const { darkMode } = useTheme();

@@ -2,15 +2,21 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext.jsx";
+
 import { useTheme } from "../../context/ThemeContext.jsx";
-import logoLight from "../../assets/logo-light.png"; // Logo pour le mode clair
-import logoDark from "../../assets/logo-dark.png"; // Logo pour le mode sombre
-import { ROUTES } from "../../routes/routes.js"; // Utiliser routes constants
+import logoLight from "../../assets/logo-light.png";
+import logoDark from "../../assets/logo-dark.png";
+import { ROUTES } from "../../routes/routes.js";
 
 export default function Navbar() {
-  const { user } = useContext(AuthContext);
+  const { currentUser } = useContext(AuthContext);
   const { darkMode, toggleDark } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Log dès que currentUser change
+  useEffect(() => {
+    console.log("[Navbar] currentUser →", currentUser);
+  }, [currentUser]);
 
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
@@ -59,11 +65,20 @@ export default function Navbar() {
 
         {/* Desktop menu */}
         <ul className="hidden md:flex items-center gap-6 font-medium text-gray-700 dark:text-gray-200">
-          <li><Link to={ROUTES.home}>Home</Link></li>
-          <li><Link to={ROUTES.tripForm}>Planifier</Link></li>
-          <li><Link to={ROUTES.about}>À propos</Link></li>
-          <li><Link to={ROUTES.support}>Support</Link></li>
-          {!user ? (
+          <li>
+            <Link to={ROUTES.home}>Home</Link>
+          </li>
+          <li>
+            <Link to={ROUTES.tripForm}>Planifier</Link>
+          </li>
+          <li>
+            <Link to={ROUTES.about}>À propos</Link>
+          </li>
+          <li>
+            <Link to={ROUTES.support}>Support</Link>
+          </li>
+
+          {!currentUser ? (
             <>
               <li>
                 <Link
@@ -83,8 +98,11 @@ export default function Navbar() {
               </li>
             </>
           ) : (
-            <li><Link to={ROUTES.profile}>Profil</Link></li>
+            <li>
+              <Link to={ROUTES.profile}>Profil</Link>
+            </li>
           )}
+
           <li>
             <label className="switch">
               <input
@@ -111,7 +129,7 @@ export default function Navbar() {
           </label>
           <button
             ref={buttonRef}
-            onClick={() => setMenuOpen(prev => !prev)}
+            onClick={() => setMenuOpen((prev) => !prev)}
             className="text-2xl text-gray-700 dark:text-gray-200"
             aria-label="Ouvrir le menu"
           >
@@ -126,11 +144,20 @@ export default function Navbar() {
           ref={menuRef}
           className="md:hidden bg-white dark:bg-gray-800 shadow-xl rounded-2xl mt-2 px-6 py-4 flex flex-col gap-3 font-medium text-gray-700 dark:text-gray-200 transition-colors duration-500"
         >
-          <Link to={ROUTES.home} onClick={() => setMenuOpen(false)}>Home</Link>
-          <Link to={ROUTES.tripForm} onClick={() => setMenuOpen(false)}>Planifier</Link>
-          <Link to={ROUTES.about} onClick={() => setMenuOpen(false)}>À propos</Link>
-          <Link to={ROUTES.support} onClick={() => setMenuOpen(false)}>Support</Link>
-          {!user ? (
+          <Link to={ROUTES.home} onClick={() => setMenuOpen(false)}>
+            Home
+          </Link>
+          <Link to={ROUTES.tripForm} onClick={() => setMenuOpen(false)}>
+            Planifier
+          </Link>
+          <Link to={ROUTES.about} onClick={() => setMenuOpen(false)}>
+            À propos
+          </Link>
+          <Link to={ROUTES.support} onClick={() => setMenuOpen(false)}>
+            Support
+          </Link>
+
+          {!currentUser ? (
             <>
               <Link
                 to={ROUTES.login}
@@ -148,7 +175,9 @@ export default function Navbar() {
               </Link>
             </>
           ) : (
-            <Link to={ROUTES.profile} onClick={() => setMenuOpen(false)}>Profil</Link>
+            <Link to={ROUTES.profile} onClick={() => setMenuOpen(false)}>
+              Profil
+            </Link>
           )}
         </div>
       )}

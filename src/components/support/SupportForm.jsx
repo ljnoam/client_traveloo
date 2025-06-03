@@ -1,7 +1,6 @@
 // src/components/support/SupportForm.jsx
 import React, { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { supabase } from '../../api/supabaseClient'; // ✅ Import du client Supabase
 
 export default function SupportForm() {
   const { darkMode } = useTheme();

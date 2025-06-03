@@ -1,72 +1,90 @@
-// src/components/planner/ItinerarySection.jsx
+"use client";
+
 import React from "react";
 import { useTheme } from "../../context/ThemeContext";
-import { motion } from "framer-motion";
 
-export default function ItinerarySection({ itinerary = [], showAll = false }) {
+// Petite map pour ajouter une icône selon le type d'activité
+const activityIcons = {
+  walk: "🚶",
+  restaurant: "🍽️",
+  brunch: "🥐",
+  visit: "🏛️",
+  shop: "🛍️",
+  experience: "⭐",
+  market: "🧺",
+  creative_workshop: "🎨",
+};
+
+export default function ItinerarySection({ itinerary = [] }) {
   const { darkMode } = useTheme();
-  const titleGradient = darkMode
-    ? "from-purple-700 to-purple-900"
-    : "from-green-400 to-green-600";
-  const cardBg = darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900";
-  const border = darkMode ? "border-purple-700" : "border-green-200";
-  const badge = darkMode ? "text-purple-400" : "text-green-600";
 
-  // 1 jour par défaut, tous les jours si showAll
-  const daysToShow = showAll ? itinerary : itinerary.slice(0, 1);
+  if (!Array.isArray(itinerary) || itinerary.length === 0) {
+    return (
+      <div
+        className={`p-6 rounded-2xl ${
+          darkMode ? "bg-black/70 text-violet-100" : "bg-white/80 text-gray-900"
+        }`}
+      >
+        <p>Aucune activité disponible.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <motion.h2
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className={`
-          text-2xl font-bold text-center
-          bg-gradient-to-r ${titleGradient}
-          bg-clip-text text-transparent
-        `}
-      >
-        Itinéraire
-      </motion.h2>
+    <div className="space-y-8">
+      {itinerary.map((day, dayIndex) => {
+        const displayDate = new Date(day.date).toLocaleDateString(undefined, {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
 
-      {daysToShow.map((day, dayIndex) => (
-        <motion.div
-          key={dayIndex}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: dayIndex * 0.1 }}
-          className={`
-            rounded-xl border ${border} ${cardBg}
-            shadow-md p-4 space-y-2
-          `}
-        >
-          <p className={`font-semibold ${badge}`}>Jour {dayIndex + 1}</p>
-          {/* 1 activité par défaut, toutes si showAll */}
-          {day.activities
-            .slice(0, showAll ? day.activities.length : 1)
-            .map((act, i) => (
-              <div
-                key={i}
-                className="
-                  text-sm pl-2 border-l-2 border-dashed
-                  border-gray-400 ml-1 mb-2
-                "
-              >
-                <p className="font-medium">
-                  {act.time} – {act.name}
-                </p>
-                <p className="text-gray-400 text-xs">{act.location}</p>
-                <p className="text-xs">{act.description}</p>
-                {act.price > 0 && (
-                  <p className="text-xs italic text-gray-500">
-                    €{act.price}
-                  </p>
-                )}
-              </div>
-            ))}
-        </motion.div>
-      ))}
+        return (
+          <div key={day.date || dayIndex} className="space-y-3">
+            {/* Header du jour */}
+            <div
+              className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${
+                darkMode
+                  ? "bg-violet-700 text-violet-100"
+                  : "bg-green-200 text-green-700"
+              }`}
+            >
+              Jour {dayIndex + 1} – {displayDate}
+            </div>
+
+            {/* Conteneur des activités */}
+            <div
+              className={`rounded-2xl overflow-hidden divide-y ${
+                darkMode
+                  ? "bg-black/70 divide-violet-500/20 text-violet-100"
+                  : "bg-white/80 divide-gray-200 text-gray-900"
+              }`}
+            >
+              {Array.isArray(day.activities) && day.activities.length > 0 ? (
+                day.activities.map((act, actIndex) => (
+                  <div
+                    key={`${day.date}-${actIndex}-${act.name}`}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3"
+                  >
+                    <div className="text-sm sm:text-base font-medium whitespace-nowrap">
+                      {act.start_time} – {act.end_time}
+                    </div>
+                    <div className="flex-1 sm:ml-4 mt-1 sm:mt-0 flex justify-between items-center">
+                      <span className="text-base font-semibold">{act.name}</span>
+                      <span className="text-sm opacity-70 ml-4">
+                        {activityIcons[act.type] || "🎯"} {act.type}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-4 py-3">Aucune activité ce jour.</div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
-);
+  );
 }

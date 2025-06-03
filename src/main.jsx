@@ -24,9 +24,7 @@ const Root = () => {
 };
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <AuthProvider> {/* ✅ WRAP Root avec AuthProvider */}
-      <Root />
-    </AuthProvider>
-  </React.StrictMode>
+  <AuthProvider>
+    <App />
+  </AuthProvider>
 );
