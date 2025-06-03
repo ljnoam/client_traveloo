@@ -26,7 +26,6 @@ export default function Planner() {
   const state = location.state || {}
   const { flightPayload, hotelsPayload, itineraryPayload } = state
 
-  // Si on n’a pas les payloads, rediriger vers TripForm
   useEffect(() => {
     if (!flightPayload || !itineraryPayload) {
       navigate("/trip-form")
@@ -100,7 +99,6 @@ export default function Planner() {
 
   const flexClasses = getFlexClasses()
 
-  // Appliquer les filtres aux vols disponibles
   const applyFilters = (criteria) => {
     setFilterCriteria(criteria)
     const {
@@ -127,7 +125,6 @@ export default function Planner() {
     setFilteredFlights(result)
   }
 
-  // Fonction pour (re)générer l’itinéraire via l’API
   const fetchItinerary = async () => {
     setLoadingItinerary(true)
     setError("")
@@ -140,28 +137,18 @@ export default function Planner() {
       const status = err.response?.status
       const detail = err.response?.data || "Erreur inconnue"
       if (status === 502) setError("Serveur IA indisponible.")
-      else
-        setError(
-          (prev) =>
-            prev +
-            (prev ? " | " : "") +
-            `Itinéraire : ${
-              Array.isArray(detail) ? detail.join(", ") : detail
-            }`
-        )
+      else setError((prev) => prev + (prev ? " | " : "") + `Itinéraire : ${Array.isArray(detail) ? detail.join(", ") : detail}`)
       setItinerary([])
     } finally {
       setLoadingItinerary(false)
     }
   }
 
-  // Charger vols, hôtels et itinéraire au montage
   useEffect(() => {
     const fetchAll = async () => {
       setLoadingFlights(true)
       setLoadingHotels(true)
       setError("")
-
       try {
         const flightsRes = await api.post("/api/search", flightPayload, {
           headers: { "Content-Type": "application/json" },
@@ -171,9 +158,7 @@ export default function Planner() {
         setFilteredFlights(data)
       } catch (err) {
         const detail = err.response?.data?.detail || "Erreur inconnue"
-        setError(`Vols : ${
-          Array.isArray(detail) ? detail.join(", ") : detail
-        }`)
+        setError(`Vols : ${Array.isArray(detail) ? detail.join(", ") : detail}`)
         setFlights([])
         setFilteredFlights([])
       } finally {
@@ -188,9 +173,7 @@ export default function Planner() {
           setHotels([])
         }
       } catch (err) {
-        setError((prev) =>
-          prev ? prev : `Hôtels : ${err.message || "Erreur inconnue"}`
-        )
+        setError((prev) => prev ? prev : `Hôtels : ${err.message || "Erreur inconnue"}`)
         setHotels([])
       } finally {
         setLoadingHotels(false)
@@ -204,45 +187,27 @@ export default function Planner() {
     }
   }, [flightPayload, hotelsPayload, itineraryPayload])
 
-  const displayedFlights = flightsOpen
-    ? filteredFlights.slice(0, 10)
-    : filteredFlights.slice(0, 2)
+  const displayedFlights = flightsOpen ? filteredFlights.slice(0, 10) : filteredFlights.slice(0, 2)
   const displayedHotels = hotelsOpen ? hotels : hotels.slice(0, 2)
 
-  if (loadingAuth || loadingFlights || loadingHotels || loadingItinerary)
-    return <Loader />
+  if (loadingAuth || loadingFlights || loadingHotels || loadingItinerary) return <Loader />
 
   return (
     <div className="relative min-h-screen overflow-hidden">
       <GlobalBackground />
       <Navbar />
       <SidebarNav onNavigate={handleSectionChange} />
-<br></br><br></br>
       <div className="relative z-10 w-full px-4 py-12 space-y-12 max-w-7xl mx-auto">
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 mb-6 rounded text-center">
-            {error}
-          </div>
+          <div className="bg-red-100 text-red-700 p-3 mb-6 rounded text-center">{error}</div>
         )}
         <div className="lg:flex lg:space-x-8 min-h-[600px]">
-          {/* Colonne de gauche */}
           <div className="lg:w-2/5 flex flex-col space-y-8">
-            {/* Section Vols */}
-            <div
-              ref={flightsRef}
-              className={`scroll-mt-24 flex flex-col transition-all duration-300 ${flexClasses.flights}`}
-            >
+            <div ref={flightsRef} className={`scroll-mt-24 flex flex-col transition-all duration-300 ${flexClasses.flights}`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  Vols
-                </h2>
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Vols</h2>
                 <label className="flex flex-col gap-2 w-8 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="peer hidden"
-                    checked={flightsOpen}
-                    onChange={handleFlightsToggle}
-                  />
+                  <input type="checkbox" className="peer hidden" checked={flightsOpen} onChange={handleFlightsToggle} />
                   <div className="rounded-2xl h-[3px] w-1/2 bg-black dark:bg-white duration-500 origin-right peer-checked:rotate-[225deg] peer-checked:-translate-x-[12px] peer-checked:-translate-y-[1px]" />
                   <div className="rounded-2xl h-[3px] w-full bg-black dark:bg-white duration-500 peer-checked:-rotate-45" />
                   <div className="rounded-2xl h-[3px] w-1/2 bg-black dark:bg-white duration-500 place-self-end origin-left peer-checked:rotate-[225deg] peer-checked:translate-x-[12px] peer-checked:translate-y-[1px]" />
@@ -259,22 +224,11 @@ export default function Planner() {
               </div>
             </div>
 
-            {/* Section Hôtels + Carte interactive */}
-            <div
-              ref={hotelsRef}
-              className={`scroll-mt-24 flex flex-col transition-all duration-300 ${flexClasses.hotels}`}
-            >
+            <div ref={hotelsRef} className={`scroll-mt-24 flex flex-col transition-all duration-300 ${flexClasses.hotels}`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  Hôtels
-                </h2>
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Hôtels</h2>
                 <label className="flex flex-col gap-2 w-8 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="peer hidden"
-                    checked={hotelsOpen}
-                    onChange={handleHotelsToggle}
-                  />
+                  <input type="checkbox" className="peer hidden" checked={hotelsOpen} onChange={handleHotelsToggle} />
                   <div className="rounded-2xl h-[3px] w-1/2 bg-black dark:bg-white duration-500 origin-right peer-checked:rotate-[225deg] peer-checked:-translate-x-[12px] peer-checked:-translate-y-[1px]" />
                   <div className="rounded-2xl h-[3px] w-full bg-black dark:bg-white duration-500 peer-checked:-rotate-45" />
                   <div className="rounded-2xl h-[3px] w-1/2 bg-black dark:bg-white duration-500 place-self-end origin-left peer-checked:rotate-[225deg] peer-checked:translate-x-[12px] peer-checked:translate-y-[1px]" />
@@ -283,7 +237,6 @@ export default function Planner() {
               <div className="relative flex-1 p-4 -m-2 rounded-2xl bg-white/30 dark:bg-gray-900/30 backdrop-blur-lg">
                 <div className="absolute inset-0 rounded-2xl bg-white/20 dark:bg-gray-800/20 backdrop-blur-md" />
                 <div className="relative z-10 flex flex-col space-y-4 h-full overflow-y-auto">
-                  {/* Carte interactive centrée sur la ville recherchée */}
                   <HotelMapSquareWidget city={itineraryPayload.city} hotels={hotels} />
                   {displayedHotels.map((hotel, idx) => (
                     <HotelPreviewCard key={hotel.id || idx} hotels={[hotel]} />
@@ -292,110 +245,39 @@ export default function Planner() {
               </div>
             </div>
           </div>
-        )
 
-          {/* Colonne de droite: Itinéraire */}
           <div ref={itineraryRef} className="lg:w-3/5 scroll-mt-24 flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                Itinéraire
-              </h2>
-              <button
-                onClick={fetchItinerary}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                Régénérer
-              </button>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Itinéraire</h2>
+              <button onClick={fetchItinerary} className="text-sm text-blue-500 hover:underline">Régénérer</button>
             </div>
             <div className="relative flex-1 p-4 -m-2 rounded-2xl bg-white/30 dark:bg-gray-900/30 backdrop-blur-lg">
               <div className="absolute inset-0 rounded-2xl bg-white/20 dark:bg-gray-800/20 backdrop-blur-md" />
               <div className="relative z-10 flex-1 overflow-y-auto space-y-6">
                 {itinerary.map((day, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg backdrop-blur-sm"
-                  >
-                    <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">
-                      Jour {idx + 1}
-                    </h3>
+                  <div key={idx} className="p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg backdrop-blur-sm">
+                    <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Jour {idx + 1}</h3>
                     <div className="space-y-2">
                       {day.activities.map((act, i) => (
-                        <div key={idx + "-" + i} className="flex flex-col">
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {act.time} — {act.name}
-                          </span>
-                          <span className="text-sm text-gray-600 dark:text-gray-300">
-                            {act.location}
-                          </span>
-                          <p className="text-sm text-gray-700 dark:text-gray-200">
-                            {act.description}
-                          </p>
-                          <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                            €{act.price}
-                          </span>
+                        <div key={`${idx}-${i}`} className="flex flex-col">
+                          <span className="font-medium text-gray-900 dark:text-white">{act.time} — {act.name}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-300">{act.location}</span>
+                          <p className="text-sm text-gray-700 dark:text-gray-200">{act.description}</p>
+                          <span className="text-sm font-semibold text-green-600 dark:text-green-400">€{act.price}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div
-              ref={itineraryRef}
-              className="lg:w-3/5 scroll-mt-24 flex flex-col"
-            >
-              <div className="mb-4">
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  Itinéraire
-                </h2>
-              </div>
-              <div className="relative flex-1 p-4 -m-2 rounded-2xl bg-white/30 dark:bg-gray-900/30 backdrop-blur-lg">
-                <div className="absolute inset-0 rounded-2xl bg-white/20 dark:bg-gray-800/20 backdrop-blur-md" />
-                <div className="relative z-10 flex-1 overflow-y-auto space-y-6">
-                  {loadingItinerary ? (
-                    <p className="text-center text-gray-700 dark:text-gray-300">
-                      Chargement de l’itinéraire…
-                    </p>
-                  ) : Array.isArray(itinerary) && itinerary.length > 0 ? (
-                    <ItinerarySection itinerary={itinerary} />
-                  ) : (
-                    <p className="text-center text-gray-700 dark:text-gray-300">
-                      Aucun itinéraire généré.
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="text-center mt-6 space-y-3">
-                <button
-                  onClick={handleGenerateItinerary}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                >
-                  Régénérer mon itinéraire
-                </button>
-                <div>
-                  <button
-                    onClick={handleSaveFavorite}
-                    disabled={savingFavorite}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50"
-                  >
-                    {savingFavorite ? "Ajout en cours..." : "Ajouter aux favoris"}
-                  </button>
-                  {saveMessage && (
-                    <p className="mt-2 text-sm text-center text-white">{saveMessage}</p>
-                  )}
-                </div>
+                ))}
               </div>
             </div>
           </div>
-        )
+        </div>
 
-        {/* Zone Widgets */}
         <div ref={widgetsRef} className="scroll-mt-24">
           <WidgetsContainer flightsOpen={flightsOpen} hotelsOpen={hotelsOpen} />
         </div>
       </div>
     </div>
-  );
+  )
 }
