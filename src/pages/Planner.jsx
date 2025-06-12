@@ -129,7 +129,7 @@ export default function Planner() {
     setLoadingItinerary(true)
     setError("")
     try {
-      const itinRes = await api.post("/api/generate-itinerary", itineraryPayload, {
+      const itinRes = await api.post("/generate-itinerary", itineraryPayload, {
         headers: { "Content-Type": "application/json" },
       })
       setItinerary(Array.isArray(itinRes.data.days) ? itinRes.data.days : [])
